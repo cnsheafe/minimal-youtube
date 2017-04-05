@@ -5,39 +5,47 @@ function getYoutubeSearchResult(query){
     data: {
       part: 'snippet',
       key: 'AIzaSyCUDIUbnbMp30QXCi9v8UacXjWKpaOscsI',
-      q: query
+      q: query,
+      type: 'video'
     },
     dataType: 'json'
   };
   return $.ajax(settings);
 }
-
-function retrieveThumbnails(responseObj) {
-  let thumbnails = [];
+// responseObj.items is part of Youtube API
+function retrieveThumbnails(responseObj, vidRefObj) {
   $.each(responseObj.items, function(index, obj) {
-    thumbnails.push(obj.snippet.thumbnails.high.url);
+    vidRefObj.thumbs.push(obj.snippet.thumbnails.high.url);
+    vidRefObj.ids.push(obj.id.videoId);
   });
-  return thumbnails;
 }
 
-function renderThumbnails(thumbsArr) {
+function renderThumbnails(vidRefObj) {
   let html = '';
-  $.each(thumbsArr, function functionName(ind, val) {
-    html += '<img src='+val+' alt: "thumb-"'+ind+'>';
+  $.each(vidRefObj.thumbs, function functionName(ind, val) {
+    html += '<li><a href="https://www.youtube.com/watch?v='+vidRefObj.ids[ind]+'" target="_blank">';
+    html += '<img src='+val+' alt: "thumb-"'+ind+'></a></li>';
   });
-  $('main').append(html);
+  $('#search-results').html(html);
 }
 
 $(function main() {
 
   $('form').on('submit', function(event) {
     event.preventDefault();
-    let query = $(this).text();
+    let query = $('#query').val();
+    console.log(query);
     promise = getYoutubeSearchResult(query);
-    let thumbnails = [];
+
+    let vidRefObj = {
+      thumbs: [],
+      ids: []
+    };
+
     promise.done(function(data) {
-      thumbnails = retrieveThumbnails(data);
-      renderThumbnails(thumbnails);
+      console.log(data);
+      retrieveThumbnails(data, vidRefObj);
+      renderThumbnails(vidRefObj);
     });
   });
 });
